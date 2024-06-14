@@ -82,9 +82,9 @@ const LessonForm = () => {
   }, [lessonPlan]);
 
   return (
-    <div className="flex justify-center items-start space-x-4 p-4 w-screen">
+    <div className="flex flex-col lg:flex-row justify-center items-start space-y-4 lg:space-y-0 lg:space-x-4 p-4 w-screen">
       {/* Form container */}
-      <div className="w-full max-w-lg h-full p-4 bg-white shadow-md rounded-lg">
+      <div className="w-full lg:max-w-lg h-full md:mx-w-3xl sm:max-w-3xl p-4 bg-white shadow-md rounded-lg">
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
             <label className="block text-gray-700 text-sm font-bold mb-2">Lesson Description</label>
