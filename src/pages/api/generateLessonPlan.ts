@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
+import { YoutubeTranscript } from 'youtube-transcript';
 import OpenAI, { toFile } from 'openai';
-import formidable from 'formidable';
+import formidable, { File } from 'formidable';
 import fs from 'fs';
 import path from 'path';
 
@@ -20,6 +21,7 @@ const ensureUploadsDir = () => {
   }
 };
 
+// Parse form data and save files to the uploads directory
 const parseForm = (req: NextApiRequest): Promise<{ fields: formidable.Fields; files: formidable.Files }> => {
   ensureUploadsDir();
   const form = formidable({ uploadDir: path.join(process.cwd(), 'uploads'), keepExtensions: true });
@@ -34,6 +36,7 @@ const parseForm = (req: NextApiRequest): Promise<{ fields: formidable.Fields; fi
   });
 };
 
+// Wait for the run to complete by polling the API
 const waitForRunCompletion = async (threadId: string, runId: string) => {
   while (true) {
     const run = await openai.beta.threads.runs.retrieve(threadId, runId);
@@ -55,8 +58,62 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
     const { fields, files } = await parseForm(req);
     console.log('Form data parsed successfully:', fields, files);
 
-    const { lessonDescription, lessonDuration, youtubeLinks } = fields;
-    const uploadedFiles = Array.isArray(files.files) ? files.files : [files.files];
+    const { lessonDescription, lessonDuration } = fields;
+    const uploadedFiles: File[] = [];
+
+    let youtubeLinks: string | any[] = [];
+    if (fields) {
+      for (let i = 0; i < Object.keys(fields).length; i++) {
+        if (Object.keys(fields)[i].includes('youtubeLinks')) {
+          // youtubeLinks.push(fields[Object.keys(fields)[i][0]]);
+          let youtubeLink = fields[Object.keys(fields)[i]];
+          if (youtubeLink) {
+            youtubeLinks.push(youtubeLink[0]);
+          }
+        }
+      }
+    }
+    
+    console.log(youtubeLinks)
+    // Add files from the form upload
+    if (files.files) {
+      const fileArray = Array.isArray(files.files) ? files.files : [files.files];
+      uploadedFiles.push(...fileArray.filter((file): file is File => !!file));
+    }
+
+    // Loop through each YouTube link, get the transcript, and create a file for it in the uploads folder
+    if (youtubeLinks) {
+      for (let i = 0; i < youtubeLinks.length; i++) {
+        const youtubeLink = youtubeLinks[i];
+        if (youtubeLink) {
+          try {
+            console.log(`Fetching transcript for YouTube link: ${youtubeLink}`);
+            const transcript = await YoutubeTranscript.fetchTranscript(youtubeLink);
+            console.log(`Transcript fetched successfully for YouTube link: ${youtubeLink}`);
+            
+            // Create a file with the transcript
+            const transcriptFile = path.join(process.cwd(), 'uploads', `transcript_${i}.txt`);
+            fs.writeFileSync(transcriptFile, JSON.stringify(transcript)); // Convert transcript to a string before writing to file
+            console.log(`Transcript written to file: ${transcriptFile}`);
+            
+            // Create a formidable file object and push to uploadedFiles
+            const transcriptStats = fs.statSync(transcriptFile);
+            const formidableFile: File = {
+              filepath: transcriptFile,
+              originalFilename: `transcript_${i}.txt`,
+              mimetype: 'text/plain',
+              size: transcriptStats.size,
+              newFilename: `transcript_${i}.txt`,
+              hashAlgorithm: false,
+            } as unknown as File;
+            uploadedFiles.push(formidableFile);
+            console.log(`Formidable file object created and added to uploadedFiles: ${transcriptFile}`);
+          } catch (error) {
+            console.error(`Error fetching transcript for YouTube link: ${youtubeLink}`, error);
+          }
+        }
+      }
+    }
 
     console.log('Creating vector store...');
     const vectorStore = await openai.beta.vectorStores.create({
@@ -65,14 +122,12 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
     });
     console.log('Vector store created:', vectorStore);
 
-    if (uploadedFiles.length > 0 && uploadedFiles[0]) {
+    if (uploadedFiles.length > 0) {
       console.log('Uploading files to vector store...');
       const fileUploads = await Promise.all(
-        uploadedFiles
-          .filter((file): file is formidable.File => !!file)
-          .map(file =>
-            toFile(fs.createReadStream(file.filepath), file.originalFilename)
-          )
+        uploadedFiles.map(file =>
+          toFile(fs.createReadStream(file.filepath), file.originalFilename)
+        )
       );
       await openai.beta.vectorStores.fileBatches.uploadAndPoll(vectorStore.id, { files: fileUploads });
       console.log('Files uploaded successfully');

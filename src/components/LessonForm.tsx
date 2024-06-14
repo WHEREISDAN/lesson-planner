@@ -6,6 +6,7 @@ import 'tailwindcss/tailwind.css';
 import { Mosaic } from 'react-loading-indicators';
 
 const LessonForm = () => {
+  // State variables to manage the form inputs and lesson plan
   const [lessonDescription, setLessonDescription] = useState('');
   const [lessonDuration, setLessonDuration] = useState('');
   const [youtubeLinks, setYoutubeLinks] = useState<string[]>([]);
@@ -14,6 +15,7 @@ const LessonForm = () => {
   const [visible, setVisible] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
+  // Effect to load the lesson plan from local storage when the component mounts
   useEffect(() => {
     const storedLessonPlan = localStorage.getItem('lessonPlan');
     if (storedLessonPlan) {
@@ -22,16 +24,19 @@ const LessonForm = () => {
     }
   }, []);
 
+  // Handler to add a new YouTube link input field
   const handleAddYoutubeLink = () => {
     setYoutubeLinks([...youtubeLinks, '']);
   };
 
+  // Handler to update YouTube link input fields
   const handleYoutubeLinkChange = (index: number, value: string) => {
     const newLinks = [...youtubeLinks];
     newLinks[index] = value;
     setYoutubeLinks(newLinks);
   };
 
+  // Handler to submit the form and generate the lesson plan
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -40,7 +45,7 @@ const LessonForm = () => {
     formData.append('lessonDescription', lessonDescription);
     formData.append('lessonDuration', lessonDuration);
     youtubeLinks.forEach((link, index) => {
-      formData.append(`youtubeLinks[${index}]`, link);
+      formData.append(`youtubeLinks[${index}]`, String(link));
     });
     if (files) {
       Array.from(files).forEach((file) => {
@@ -57,7 +62,7 @@ const LessonForm = () => {
       const data = await response.json();
       if (response.ok) {
         setLessonPlan(data.lessonPlan);
-        localStorage.setItem('lessonPlan', data.lessonPlan);
+        localStorage.setItem('lessonPlan', data.lessonPlan); // Store the lesson plan in local storage
         setVisible(true);  // Show the lesson plan
       } else {
         console.error(data.message);
@@ -69,6 +74,7 @@ const LessonForm = () => {
     }
   };
 
+  // Effect to set visibility when lessonPlan is updated
   useEffect(() => {
     if (lessonPlan) {
       setVisible(true);
@@ -77,6 +83,7 @@ const LessonForm = () => {
 
   return (
     <div className="flex justify-center items-start space-x-4 p-4 w-screen">
+      {/* Form container */}
       <div className="w-full max-w-lg h-full p-4 bg-white shadow-md rounded-lg">
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
@@ -132,20 +139,22 @@ const LessonForm = () => {
           </div>
         </form>
       </div>
+
+      {/* Display generated lesson plan or loading indicator */}
       <div className='w-full p-4 bg-white text-gray-700 shadow-md rounded-lg overflow-auto' style={{ height: 'calc(100vh - 2rem)' }}>
         {isLoading ? (
-            <div className="w-full p-4 text-gray-700 flex justify-center items-center" style={{ height: 'calc(100vh - 2rem)' }}>
+          <div className="w-full p-4 text-gray-700 flex justify-center items-center" style={{ height: 'calc(100vh - 2rem)' }}>
             <Mosaic color="#f3f4f6" size="medium" text="" textColor="" />
-            </div>
+          </div>
         ) : (
-            lessonPlan && (
+          lessonPlan && (
             <div className={`w-full p-4 text-gray-700 h-11/12 transition-opacity duration-500 ease-in-out ${visible ? 'opacity-100' : 'opacity-0'}`} style={{ height: 'calc(100vh - 2rem)' }}>
-                <h2 className="text-lg font-bold">Generated Lesson Plan</h2>
-                <Markdown className="prose">{lessonPlan}</Markdown>
+              <h2 className="text-lg font-bold">Generated Lesson Plan</h2>
+              <Markdown className="prose">{lessonPlan}</Markdown>
             </div>
-            )
+          )
         )}
-        </div>
+      </div>
     </div>
   );
 };
