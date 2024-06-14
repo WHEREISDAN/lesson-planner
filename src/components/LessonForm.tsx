@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Markdown from 'markdown-to-jsx';
 import 'tailwindcss/tailwind.css';
+import { Mosaic } from 'react-loading-indicators';
 
 const LessonForm = () => {
   const [lessonDescription, setLessonDescription] = useState('');
@@ -11,6 +12,7 @@ const LessonForm = () => {
   const [files, setFiles] = useState<FileList | null>(null);
   const [lessonPlan, setLessonPlan] = useState<string | null>(null);
   const [visible, setVisible] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleAddYoutubeLink = () => {
     setYoutubeLinks([...youtubeLinks, '']);
@@ -24,6 +26,7 @@ const LessonForm = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsLoading(true);
     
     const formData = new FormData();
     formData.append('lessonDescription', lessonDescription);
@@ -52,6 +55,8 @@ const LessonForm = () => {
       }
     } catch (error) {
       console.error('Error submitting form', error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -62,8 +67,8 @@ const LessonForm = () => {
   }, [lessonPlan]);
 
   return (
-    <div className="flex justify-center items-start space-x-4 p-4">
-      <div className="w-full max-w-md h-full p-4 bg-white shadow-md rounded-lg">
+    <div className="flex justify-center items-start space-x-4 p-4 w-screen">
+      <div className="w-full max-w-lg h-full p-4 bg-white shadow-md rounded-lg">
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
             <label className="block text-gray-700 text-sm font-bold mb-2">Lesson Description</label>
@@ -118,12 +123,20 @@ const LessonForm = () => {
           </div>
         </form>
       </div>
-      {lessonPlan && (
-        <div className={`w-full max-w-2xl p-4 bg-white text-gray-700 shadow-md rounded-lg overflow-auto transition-opacity duration-500 ease-in-out ${visible ? 'opacity-100' : 'opacity-0'}`} style={{ height: 'calc(100vh - 2rem)' }}>
-          <h2 className="text-lg font-bold">Generated Lesson Plan</h2>
-          <Markdown className="prose">{lessonPlan}</Markdown>
+      <div className='w-full p-4 bg-white text-gray-700 shadow-md rounded-lg' style={{ height: 'calc(100vh - 2rem)' }}>
+        {isLoading ? (
+            <div className="w-full p-4 text-gray-700 flex justify-center items-center" style={{ height: 'calc(100vh - 2rem)' }}>
+            <Mosaic color="#f3f4f6" size="medium" text="" textColor="" />
+            </div>
+        ) : (
+            lessonPlan && (
+            <div className={`w-11/12 p-4 text-gray-700 overflow-auto transition-opacity duration-500 ease-in-out ${visible ? 'opacity-100' : 'opacity-0'}`} style={{ height: 'calc(100vh - 2rem)' }}>
+                <h2 className="text-lg font-bold">Generated Lesson Plan</h2>
+                <Markdown className="prose">{lessonPlan}</Markdown>
+            </div>
+            )
+        )}
         </div>
-      )}
     </div>
   );
 };

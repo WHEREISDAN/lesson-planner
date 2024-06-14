@@ -12,8 +12,17 @@ export const config = {
   },
 };
 
+// Ensure the uploads directory exists
+const ensureUploadsDir = () => {
+  const uploadDir = path.join(process.cwd(), 'uploads');
+  if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir);
+  }
+};
+
 const parseForm = (req: NextApiRequest): Promise<{ fields: formidable.Fields; files: formidable.Files }> => {
-  const form = formidable({ uploadDir: path.join(process.cwd(), '/uploads'), keepExtensions: true });
+  ensureUploadsDir();
+  const form = formidable({ uploadDir: path.join(process.cwd(), 'uploads'), keepExtensions: true });
   return new Promise((resolve, reject) => {
     form.parse(req, (err, fields, files) => {
       if (err) {
@@ -47,7 +56,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
     console.log('Form data parsed successfully:', fields, files);
 
     const { lessonDescription, lessonDuration, youtubeLinks } = fields;
-    const uploadedFiles = files.files ? (files.files as formidable.File[]) : [];
+    const uploadedFiles = Array.isArray(files.files) ? files.files : [files.files];
 
     console.log('Creating vector store...');
     const vectorStore = await openai.beta.vectorStores.create({
@@ -56,12 +65,14 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
     });
     console.log('Vector store created:', vectorStore);
 
-    if (uploadedFiles.length > 0) {
+    if (uploadedFiles.length > 0 && uploadedFiles[0]) {
       console.log('Uploading files to vector store...');
       const fileUploads = await Promise.all(
-        uploadedFiles.map(file =>
-          toFile(fs.createReadStream(file.filepath), file.originalFilename)
-        )
+        uploadedFiles
+          .filter((file): file is formidable.File => !!file)
+          .map(file =>
+            toFile(fs.createReadStream(file.filepath), file.originalFilename)
+          )
       );
       await openai.beta.vectorStores.fileBatches.uploadAndPoll(vectorStore.id, { files: fileUploads });
       console.log('Files uploaded successfully');
