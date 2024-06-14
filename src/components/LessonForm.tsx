@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Markdown from 'markdown-to-jsx';
 import 'tailwindcss/tailwind.css';
 import { Mosaic } from 'react-loading-indicators';
+import { FaGithubSquare } from 'react-icons/fa';
 
 const LessonForm = () => {
   // State variables to manage the form inputs and lesson plan
@@ -84,7 +85,7 @@ const LessonForm = () => {
   return (
     <div className="flex flex-col lg:flex-row justify-center items-start space-y-4 lg:space-y-0 lg:space-x-4 p-4 w-screen">
       {/* Form container */}
-      <div className="w-full lg:max-w-lg h-full md:mx-w-3xl sm:max-w-3xl p-4 bg-white shadow-md rounded-lg">
+      <div className="w-full lg:max-w-lg h-full md:mx-w-3xl sm:max-w-3xl p-4 bg-white shadow-md rounded-lg flex flex-col justify-between">
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
             <label className="block text-gray-700 text-sm font-bold mb-2">Lesson Description</label>
@@ -138,6 +139,12 @@ const LessonForm = () => {
             </button>
           </div>
         </form>
+        <div className='mt-auto flex flex-row justify-center items-center'>
+            <FaGithubSquare onClick={() => window.open('https://www.github.com/WHEREISDAN/', '_blank')} className='cursor-pointer text-2xl m-2 text-gray-500 hover:text-gray-700' />
+            <a href='https://www.github.com/WHEREISDAN' target='_blank' className='cursor-pointer'>
+                <p className='text-center text-gray-500 font-semibold text-sm hover:text-gray-700'>Made by WHEREISDAN</p>
+            </a>
+          </div>
       </div>
 
       {/* Display generated lesson plan or loading indicator */}
