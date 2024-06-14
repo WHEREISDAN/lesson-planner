@@ -14,6 +14,14 @@ const LessonForm = () => {
   const [visible, setVisible] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
+  useEffect(() => {
+    const storedLessonPlan = localStorage.getItem('lessonPlan');
+    if (storedLessonPlan) {
+      setLessonPlan(storedLessonPlan);
+      setVisible(true);
+    }
+  }, []);
+
   const handleAddYoutubeLink = () => {
     setYoutubeLinks([...youtubeLinks, '']);
   };
@@ -49,6 +57,7 @@ const LessonForm = () => {
       const data = await response.json();
       if (response.ok) {
         setLessonPlan(data.lessonPlan);
+        localStorage.setItem('lessonPlan', data.lessonPlan);
         setVisible(true);  // Show the lesson plan
       } else {
         console.error(data.message);
@@ -123,14 +132,14 @@ const LessonForm = () => {
           </div>
         </form>
       </div>
-      <div className='w-full p-4 bg-white text-gray-700 shadow-md rounded-lg' style={{ height: 'calc(100vh - 2rem)' }}>
+      <div className='w-full p-4 bg-white text-gray-700 shadow-md rounded-lg overflow-auto' style={{ height: 'calc(100vh - 2rem)' }}>
         {isLoading ? (
             <div className="w-full p-4 text-gray-700 flex justify-center items-center" style={{ height: 'calc(100vh - 2rem)' }}>
             <Mosaic color="#f3f4f6" size="medium" text="" textColor="" />
             </div>
         ) : (
             lessonPlan && (
-            <div className={`w-11/12 p-4 text-gray-700 overflow-auto transition-opacity duration-500 ease-in-out ${visible ? 'opacity-100' : 'opacity-0'}`} style={{ height: 'calc(100vh - 2rem)' }}>
+            <div className={`w-full p-4 text-gray-700 h-11/12 transition-opacity duration-500 ease-in-out ${visible ? 'opacity-100' : 'opacity-0'}`} style={{ height: 'calc(100vh - 2rem)' }}>
                 <h2 className="text-lg font-bold">Generated Lesson Plan</h2>
                 <Markdown className="prose">{lessonPlan}</Markdown>
             </div>

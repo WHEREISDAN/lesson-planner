@@ -118,6 +118,13 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
     const lessonPlan = assistantMessage.content[0].text.value;
     console.log('Generated lesson plan:', lessonPlan);
 
+    // Delete temporary files
+    uploadedFiles.forEach((file) => {
+      if (file) {
+        fs.unlinkSync(file.filepath);
+      }
+    });
+
     res.status(200).json({ lessonPlan });
   } catch (error) {
     console.error('Error generating lesson plan:', error);
