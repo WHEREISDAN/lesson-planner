@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@tailwindcss/typography": "^0.5.13",
+    "dotenv": "^16.4.5",
     "firebase": "^10.12.2",
     "formidable": "^3.5.1",
     "markdown-to-jsx": "^7.4.7",

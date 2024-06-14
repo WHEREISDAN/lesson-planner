@@ -5,7 +5,7 @@ import formidable, { File } from 'formidable';
 import fs from 'fs';
 import path from 'path';
 
-const openai = new OpenAI({ apiKey: 'sk-proj-SvV4F0UxwgNJJGQVWLLrT3BlbkFJAlIp9jtOXIQlgH9jMVoK' });
+const openai = new OpenAI({ apiKey: process.env.OPENAI_KEY });
 
 export const config = {
   api: {
@@ -153,7 +153,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
 
     console.log('Creating run...');
     const run = await openai.beta.threads.runs.create(thread.id, {
-      assistant_id: 'asst_Of6FsFTFGnFnaHujvuyR392k',
+      assistant_id: process.env.ASSISTANT_ID || '',
     });
     console.log('Run created:', run);
 
