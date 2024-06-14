@@ -1,0 +1,7 @@
+{
+    "build": {
+      "env": {
+        "TAILWIND_MODE": "build"
+      }
+    }
+  }
