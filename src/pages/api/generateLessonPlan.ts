@@ -38,8 +38,8 @@ const parseForm = (req: NextApiRequest): Promise<{ fields: formidable.Fields; fi
 
 // Wait for the run to complete by polling the API
 const waitForRunCompletion = async (threadId: string, runId: string) => {
-  const timeout = 60000; // 1 minute
-  const interval = 1000; // 1 second
+  const timeout = 5000; // 5 seconds
+  const interval = 500; // 0.5 second
   let elapsedTime = 0;
 
   while (elapsedTime < timeout) {
@@ -48,7 +48,7 @@ const waitForRunCompletion = async (threadId: string, runId: string) => {
     if (run.status === 'completed') {
       return run;
     }
-    await new Promise(resolve => setTimeout(resolve, interval)); // Wait for 1 second
+    await new Promise(resolve => setTimeout(resolve, interval)); // Wait for 0.5 second
     elapsedTime += interval;
   }
 
