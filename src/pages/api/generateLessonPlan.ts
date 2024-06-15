@@ -13,18 +13,18 @@ export const config = {
   },
 };
 
-// Ensure the uploads directory exists
+// Ensure the temporary uploads directory exists in /tmp
 const ensureUploadsDir = () => {
-  const uploadDir = path.join(process.cwd(), 'tmp');
+  const uploadDir = '/tmp/uploads';
   if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir);
+    fs.mkdirSync(uploadDir, { recursive: true });
   }
 };
 
-// Parse form data and save files to the uploads directory
+// Parse form data and save files to the temporary uploads directory
 const parseForm = (req: NextApiRequest): Promise<{ fields: formidable.Fields; files: formidable.Files }> => {
   ensureUploadsDir();
-  const form = formidable({ uploadDir: path.join(process.cwd(), 'tmp'), keepExtensions: true });
+  const form = formidable({ uploadDir: '/tmp/uploads', keepExtensions: true });
   return new Promise((resolve, reject) => {
     form.parse(req, (err, fields, files) => {
       if (err) {
@@ -61,11 +61,10 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
     const { lessonDescription, lessonDuration } = fields;
     const uploadedFiles: File[] = [];
 
-    let youtubeLinks: string | any[] = [];
+    let youtubeLinks: string[] = [];
     if (fields) {
       for (let i = 0; i < Object.keys(fields).length; i++) {
         if (Object.keys(fields)[i].includes('youtubeLinks')) {
-          // youtubeLinks.push(fields[Object.keys(fields)[i][0]]);
           let youtubeLink = fields[Object.keys(fields)[i]];
           if (youtubeLink) {
             youtubeLinks.push(youtubeLink[0]);
@@ -74,14 +73,14 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
       }
     }
     
-    console.log(youtubeLinks)
+    console.log(youtubeLinks);
     // Add files from the form upload
     if (files.files) {
       const fileArray = Array.isArray(files.files) ? files.files : [files.files];
       uploadedFiles.push(...fileArray.filter((file): file is File => !!file));
     }
 
-    // Loop through each YouTube link, get the transcript, and create a file for it in the uploads folder
+    // Loop through each YouTube link, get the transcript, and create a file for it in the temporary uploads folder
     if (youtubeLinks) {
       for (let i = 0; i < youtubeLinks.length; i++) {
         const youtubeLink = youtubeLinks[i];
@@ -92,7 +91,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
             console.log(`Transcript fetched successfully for YouTube link: ${youtubeLink}`);
             
             // Create a file with the transcript
-            const transcriptFile = path.join(process.cwd(), 'tmp', `transcript_${i}.txt`);
+            const transcriptFile = path.join('/tmp/uploads', `transcript_${i}.txt`);
             fs.writeFileSync(transcriptFile, JSON.stringify(transcript)); // Convert transcript to a string before writing to file
             console.log(`Transcript written to file: ${transcriptFile}`);
             
