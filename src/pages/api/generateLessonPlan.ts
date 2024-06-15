@@ -15,7 +15,7 @@ export const config = {
 
 // Ensure the uploads directory exists
 const ensureUploadsDir = () => {
-  const uploadDir = path.join(process.cwd(), 'uploads');
+  const uploadDir = path.join(process.cwd(), '/tmp');
   if (!fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir);
   }
@@ -24,7 +24,7 @@ const ensureUploadsDir = () => {
 // Parse form data and save files to the uploads directory
 const parseForm = (req: NextApiRequest): Promise<{ fields: formidable.Fields; files: formidable.Files }> => {
   ensureUploadsDir();
-  const form = formidable({ uploadDir: path.join(process.cwd(), 'uploads'), keepExtensions: true });
+  const form = formidable({ uploadDir: path.join(process.cwd(), '/tmp'), keepExtensions: true });
   return new Promise((resolve, reject) => {
     form.parse(req, (err, fields, files) => {
       if (err) {
@@ -92,7 +92,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
             console.log(`Transcript fetched successfully for YouTube link: ${youtubeLink}`);
             
             // Create a file with the transcript
-            const transcriptFile = path.join(process.cwd(), 'uploads', `transcript_${i}.txt`);
+            const transcriptFile = path.join(process.cwd(), '/tmp', `transcript_${i}.txt`);
             fs.writeFileSync(transcriptFile, JSON.stringify(transcript)); // Convert transcript to a string before writing to file
             console.log(`Transcript written to file: ${transcriptFile}`);
             
