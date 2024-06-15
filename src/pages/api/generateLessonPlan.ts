@@ -38,14 +38,21 @@ const parseForm = (req: NextApiRequest): Promise<{ fields: formidable.Fields; fi
 
 // Wait for the run to complete by polling the API
 const waitForRunCompletion = async (threadId: string, runId: string) => {
-  while (true) {
+  const timeout = 60000; // 1 minute
+  const interval = 1000; // 1 second
+  let elapsedTime = 0;
+
+  while (elapsedTime < timeout) {
     const run = await openai.beta.threads.runs.retrieve(threadId, runId);
     console.log('Run status:', run.status);
     if (run.status === 'completed') {
       return run;
     }
-    await new Promise(resolve => setTimeout(resolve, 1000)); // Wait for 1 second
+    await new Promise(resolve => setTimeout(resolve, interval)); // Wait for 1 second
+    elapsedTime += interval;
   }
+
+  throw new Error('Run did not complete within the expected time.');
 };
 
 export default async (req: NextApiRequest, res: NextApiResponse) => {
